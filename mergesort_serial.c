@@ -10,28 +10,28 @@
 
 #include "utilities.h"
 
-bool merge(double *arr, double *left, int left_len, double *right, int right_len) {
+bool merge(double *left, int left_len, double *right, int right_len) {
     int i = 0, j = 0, k = 0;
 
     while (i < left_len && j < right_len) {
         if (left[i] < right[j]) {
-            arr[k] = left[i];
+            left[k] = left[i];
             i++;
         } else {
-            arr[k] = right[j];
+            left[k] = right[j];
             j++;
         }
         k++;
     }
 
     while (i < left_len) {
-        arr[k] = left[i];
+        left[k] = left[i];
         i++;
         k++;
     }
 
     while (j < right_len) {
-        arr[k] = right[j];
+        left[k] = right[j];
         j++;
         k++;
     }
@@ -41,29 +41,18 @@ bool merge(double *arr, double *left, int left_len, double *right, int right_len
 
 bool merge_sort(double *arr, int n) {
 
-    if (n <= 1) {
+if (n <= 1) {
         return true;
     }
 
     int mid = n / 2;
-    double *left = (double *)malloc(mid * sizeof(double));
-    double *right = (double *)malloc((n - mid) * sizeof(double));
-
-    if (left == NULL || right == NULL) {
-        printf("Error: Unable to allocate memory\n");
-        return false;
-    }
-
-    memcpy(left, arr, mid * sizeof(double));
-    memcpy(right, arr + mid, (n - mid) * sizeof(double));
+    double *left = arr;
+    double *right = arr + mid;
 
     merge_sort(left, mid);
     merge_sort(right, n - mid);
 
-    merge(arr, left, mid, right, n - mid);
-    
-    free(left);
-    free(right);
+    merge(left, mid, right, n - mid);
 
     return true;
 }
