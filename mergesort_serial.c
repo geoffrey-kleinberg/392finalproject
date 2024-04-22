@@ -41,7 +41,7 @@ bool merge(double *left, int left_len, double *right, int right_len) {
 
 bool merge_sort(double *arr, int n) {
 
-if (n <= 1) {
+    if (n <= 1) {
         return true;
     }
 
