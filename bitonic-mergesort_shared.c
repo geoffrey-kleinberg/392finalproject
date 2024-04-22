@@ -23,6 +23,14 @@ int greatest_power_of_two(int n) {
     return power / 2;
 }
 
+int lowest_power_of_two(int n) {
+    int power = 1;
+    while (power < n) {
+        power *= 2;
+    }
+    return power;
+}
+
 void bitonic_merge(double *arr, int start, int length, bool ascending, int num_threads) {
     if (length <= 1) {
         return;
@@ -46,6 +54,9 @@ void bitonic_merge(double *arr, int start, int length, bool ascending, int num_t
 
     // bitonic_merge(arr, start, half_length, ascending, actual_length);
     // bitonic_merge(arr, start + half_length, half_length, ascending, actual_length);
+
+    // print start, length, ascending
+    // printf("Start: %d, Length: %d, Ascending: %d\n", start, length, ascending);
 
     int m = greatest_power_of_two(length);
 
@@ -106,41 +117,103 @@ bool bitonic_merge_sort_openMP(double *arr, int start, int n, int num_threads, b
 
     // return true;
 
-    int m = n / 2;
+    // int m = n / 2;
 
-    // make a list of n / 2, then (n / 2) / 2, and so on and then reverse it
+    // // make a list of n / 2, then (n / 2) / 2, and so on and then reverse it
 
-    int count = get_count(n);
-    int* list = (int*) malloc(count * sizeof(int));
-    if (list == NULL) {
-        return false;
-    }
+    // int count = get_count(n);
+    // int* list = (int*) malloc(count * sizeof(int));
+    // if (list == NULL) {
+    //     return false;
+    // }
 
-    make_list(list, n, count);
+    // make_list(list, n, count);
 
     // print the list
-    for (int i = 0; i < count; i++) {
-        printf("%d ", list[i]);
-    }
-    printf("\n");
+    // for (int i = 0; i < count; i++) {
+    //     printf("%d ", list[i]);
+    // }
+    // printf("\n");
     
     
     // bitonic_merge_sort_openMP(arr, start, m, num_threads, !ascending);
     // bitonic_merge_sort_openMP(arr, start + m, n - m, num_threads, ascending);
 
-    for (int j = count - 1; j >= 0; j--) {
-        #pragma omp parallel for num_threads(num_threads) default(none) shared(arr, n, j, ascending, num_threads, list)
-        for (int i = 0; i < n; i += list[j]) {
-            if ((i/list[j]) % 2 == 0) {
-                bitonic_merge(arr, i, list[j], ascending, num_threads);
+    // for (int j = count - 1; j >= 0; j--) {
+    //     // #pragma omp parallel for num_threads(num_threads) default(none) shared(arr, n, j, ascending, num_threads, list)
+    //     for (int i = 0; i < n; i += list[j]) {
+    //         if ((i/list[j]) % 2 == 0) {
+    //             bitonic_merge(arr, i, list[j], ascending, num_threads);
+    //         } else {
+    //             bitonic_merge(arr, i, list[j], !ascending, num_threads);
+    //         }
+    //     }
+    // }
+    // bitonic_merge(arr, 0, 1, true, num_threads);
+    // bitonic_merge(arr, 1, 2, false, num_threads);
+    // bitonic_merge(arr, 3, 1, false, num_threads);
+    // bitonic_merge(arr, 4, 2, true, num_threads);
+
+    // bitonic_merge(arr, 0, 3, false, num_threads);
+    // bitonic_merge(arr, 3, 3, true, num_threads);
+
+    // bitonic_merge(arr, 0, 6, true, num_threads);
+
+    // length 10
+    // bitonic_merge(arr, 6, 2, false, num_threads);
+    // bitonic_merge(arr, 8, 2, true, num_threads);
+
+    // bitonic_merge(arr, 0, 2, true, num_threads);
+    // bitonic_merge(arr, 2, 2, false, num_threads);
+    // bitonic_merge(arr, 4, 2, false, num_threads);
+    // bitonic_merge(arr, 6, 4, true, num_threads);
+
+    // bitonic_merge(arr, 0, 4, false, num_threads);
+    // bitonic_merge(arr, 4, 6, true, num_threads);
+
+    // bitonic_merge(arr, 0, 10, true, num_threads);
+
+    // length 11
+
+    // bitonic_merge(arr, 0, 2, false, num_threads);
+    // bitonic_merge(arr, 2, 2, true, num_threads);
+    // bitonic_merge(arr, 4, 2, true, num_threads);
+    // bitonic_merge(arr, 6, 2, false, num_threads);
+
+    // bitonic_merge(arr, 0, 4, true, num_threads);
+    // bitonic_merge(arr, 4, 4, false, num_threads);
+
+    // bitonic_merge(arr, 0, 8, false, num_threads);
+
+    // bitonic_merge(arr, 8, 2, false, num_threads);
+
+    // bitonic_merge(arr, 8, 3, true, num_threads);
+
+    // bitonic_merge(arr, 0, 11, true, num_threads);
+
+    int power = greatest_power_of_two(n);
+
+    if (power == n / 2) {
+        power = n;
+    }
+
+    for (int j = 2; j <= power; j = j*2) {
+        #pragma omp parallel for num_threads(num_threads) default(none) shared(arr, start, n, j, ascending, power)
+        for (int i = start; i < start + power; i += j) {
+            if (((i-start)/j) % 2 == 0) {
+                bitonic_merge(arr, i, j, !ascending, n);
+                // printf("start: %d, length: %d, ascending: %d\n", i, j, !ascending);
             } else {
-                bitonic_merge(arr, i, list[j], !ascending, num_threads);
+                bitonic_merge(arr, i, j, ascending, n);
+                // printf("start: %d, length: %d, ascending: %d\n", i, j, ascending);
             }
         }
     }
 
-    // #pragma omp parallel 
-    // bitonic_merge(arr, start, n, ascending, num_threads);
+    bitonic_merge_sort_openMP(arr, start + power, n - power, num_threads, ascending);
+
+    bitonic_merge(arr, start, n, ascending, num_threads);
+    // printf("start: %d, length: %d, ascending: %d\n", start, n, ascending);
 
     return true;
     
@@ -166,10 +239,10 @@ int main(int argc, char *argv[]) {
     }
 
     // print array
-    for (int i = 0; i < n; i++) {
-        printf("%f ", arr[i]);
-    }
-    printf("\n");
+    // for (int i = 0; i < n; i++) {
+    //     printf("%f ", arr[i]);
+    // }
+    // printf("\n");
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -177,10 +250,10 @@ int main(int argc, char *argv[]) {
 
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    for (int i = 0; i < n; i++) {
-        printf("%f ", arr[i]);
-    }
-    printf("\n");
+    // for (int i = 0; i < n; i++) {
+    //     printf("%f ", arr[i]);
+    // }
+    // printf("\n");
 
     if (!is_sorted(arr, n)) {
         printf("Error: Array is not sorted\n");
