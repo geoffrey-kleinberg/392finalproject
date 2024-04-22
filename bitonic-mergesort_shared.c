@@ -24,14 +24,6 @@ int greatest_power_of_two(int n) {
     return power / 2;
 }
 
-int lowest_power_of_two(int n) {
-    int power = 1;
-    while (power < n) {
-        power *= 2;
-    }
-    return power;
-}
-
 void bitonic_merge(double *arr, int start, int length, bool ascending, int num_threads) {
     if (length <= 1) {
         return;
