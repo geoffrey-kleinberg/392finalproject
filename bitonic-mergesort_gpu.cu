@@ -4,7 +4,9 @@
  * Code mostly from https://gist.github.com/mre/1392067 with some modifications.
  * 
  * Compile with: nvcc -arch=sm_86 -O3 utilities.c bitonic-mergesort_gpu.cu -o bitonic-mergesort_gpu
- * Run with:
+ * Run with: ./bitonic-mergesort_gpu array-length
+ * 
+ * Current constraints: 256 < array-length <= 2^19
 */
 
 #include <stdio.h>
