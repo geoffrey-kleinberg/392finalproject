@@ -2,6 +2,15 @@
 Sorts a list of numbers using the odd-even sort algorithm.
 incorperates OpenMP to parallelize the sorting process.
 
+Compile using:
+    gcc-13 -Wall -O3 -fopenmp utilities.c odd-even-sort_shared.c -o odd-even-sort_shared
+
+Run using:
+    ./odd-even-sort_shared array-length (num-threads)
+    where:
+        array-length: the length of the array to be sorted
+        num-threads: the number of threads to use (optional, default is half the number of cores)
+
 */
 
 #include <stdbool.h>
@@ -64,6 +73,10 @@ int main(int argc, char* argv[]) {
     if (argc == 3) {
         num_threads = atoi(argv[2]);
     }
+
+    // warmup the CPU
+    double* arr2 = create_array(n);
+    odd_even_sort(arr2, n, num_threads);
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 

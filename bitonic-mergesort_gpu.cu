@@ -17,44 +17,11 @@
 #include <time.h>
 #include <math.h>
 
-// #include "utilities.h"
+#include "utilities.h"
 
 #include <cuda_runtime.h>
 
 #define BLOCK_SIZE 512
-
-double* create_array(int n) {
-    double *arr = (double *)malloc(n * sizeof(double));
-    if (arr == NULL) {
-        printf("Error: Unable to allocate memory\n");
-        return NULL;
-    }
-
-    srand(time(NULL));
-    for (int i = 0; i < n; i++) {
-        arr[i] = rand() / (double)RAND_MAX;
-    }
-
-    return arr;
-}
-
-bool is_sorted(double *arr, int n) {
-    for (int i = 0; i < n - 1; i++) {
-        if (arr[i] > arr[i + 1]) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-int lowest_power_of_two(int n) {
-    int m = 1;
-    while (m < n) {
-        m *= 2;
-    }
-    return m;
-}
 
 void extend_array(double *arr, int n, int m) {
 
@@ -63,7 +30,7 @@ void extend_array(double *arr, int n, int m) {
     }
 }
 
-__global__ void bitonic_sort_step(double *dev_values, int j, int k) {
+__global__ void bitonic_sort_step(double *d_values, int j, int k) {
     unsigned int i, ixj; /* Sorting partners: i and ixj */
     i = threadIdx.x + blockDim.x * blockIdx.x;
     ixj = i^j;
@@ -72,31 +39,31 @@ __global__ void bitonic_sort_step(double *dev_values, int j, int k) {
     if ((ixj)>i) {
         if ((i&k)==0) {
             /* Sort ascending */
-            if (dev_values[i]>dev_values[ixj]) {
+            if (d_values[i]>d_values[ixj]) {
                 /* exchange(i,ixj); */
-                double temp = dev_values[i];
-                dev_values[i] = dev_values[ixj];
-                dev_values[ixj] = temp;
+                double temp = d_values[i];
+                d_values[i] = d_values[ixj];
+                d_values[ixj] = temp;
             }
         }
         if ((i&k)!=0) {
             /* Sort descending */
-            if (dev_values[i]<dev_values[ixj]) {
+            if (d_values[i]<d_values[ixj]) {
                 /* exchange(i,ixj); */
-                double temp = dev_values[i];
-                dev_values[i] = dev_values[ixj];
-                dev_values[ixj] = temp;
+                double temp = d_values[i];
+                d_values[i] = d_values[ixj];
+                d_values[ixj] = temp;
             }
         }
     }
 }
 
 void bitonic_sort(double *values, int n) {
-    double *dev_values;
+    double *d_values;
     size_t size = n * sizeof(double);
 
-    cudaMalloc((void**) &dev_values, size);
-    cudaMemcpy(dev_values, values, size, cudaMemcpyHostToDevice);
+    cudaMalloc((void**) &d_values, size);
+    cudaMemcpy(d_values, values, size, cudaMemcpyHostToDevice);
 
     int block = (BLOCK_SIZE < n) ? BLOCK_SIZE : n;
 
@@ -108,23 +75,23 @@ void bitonic_sort(double *values, int n) {
     for (k = 2; k <= n; k <<= 1) {
         /* Minor step */
         for (j=k>>1; j>0; j=j>>1) {
-            bitonic_sort_step<<<threads, blocks>>>(dev_values, j, k);
+            bitonic_sort_step<<<threads, blocks>>>(d_values, j, k);
         }
     }
 
-    cudaMemcpy(values, dev_values, size, cudaMemcpyDeviceToHost);
-    cudaFree(dev_values);
+    cudaMemcpy(values, d_values, size, cudaMemcpyDeviceToHost);
+    cudaFree(d_values);
 }
 
 void bitonic_sort_mem_only(double *values, int n) {
-    double *dev_values;
+    double *d_values;
     size_t size = n * sizeof(double);
 
-    cudaMalloc((void**) &dev_values, size);
-    cudaMemcpy(dev_values, values, size, cudaMemcpyHostToDevice);
+    cudaMalloc((void**) &d_values, size);
+    cudaMemcpy(d_values, values, size, cudaMemcpyHostToDevice);
 
-    cudaMemcpy(values, dev_values, size, cudaMemcpyDeviceToHost);
-    cudaFree(dev_values);
+    cudaMemcpy(values, d_values, size, cudaMemcpyDeviceToHost);
+    cudaFree(d_values);
 }
 
 int main(int argc, char *argv[]) {
@@ -144,10 +111,8 @@ int main(int argc, char *argv[]) {
 
     // warm up the GPU
     int new_n = lowest_power_of_two(n);
-    double* arr_copy = (double *)malloc(new_n * sizeof(double));
-    memcpy(arr_copy, arr, n * sizeof(double));
-    extend_array(arr_copy, n, new_n);
-    bitonic_sort(arr_copy, new_n);
+    double* arr2 = create_array(new_n);
+    bitonic_sort(arr2, new_n);
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 

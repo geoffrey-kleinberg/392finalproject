@@ -4,6 +4,9 @@
  * Most of this code is based on https://github.com/richursa/cpuBitonicSort/blob/master/bitonicSort.cpp
  * and ideas from https://hwlang.de/algorithmen/sortieren/bitonic/oddn.htm,
  * with some modifications to make it work with OpenMP.
+ * 
+ * Compile (local) with: gcc-13 -Wall -O3 -fopenmp bitonic-mergesort_shared.c utilities.c -o bitonic-mergesort_shared
+ * Run with: ./bitonic-mergesort_shared length (num-threads)
 */
 
 #include <stdio.h>
@@ -15,14 +18,6 @@
 #include <omp.h>
 
 #include "utilities.h"
-
-int greatest_power_of_two(int n) {
-    int power = 1;
-    while (power < n) {
-        power *= 2;
-    }
-    return power / 2;
-}
 
 void bitonic_merge(double *arr, int start, int length, bool ascending, int num_threads) {
     if (length <= 1) {
@@ -88,6 +83,10 @@ int main(int argc, char *argv[]) {
     if (argc == 3) {
         num_threads = atoi(argv[2]);
     }
+
+    // warmup the CPU
+    double* arr2 = create_array(n);
+    bitonic_merge_sort_openMP(arr2, 0, n, num_threads, true);
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
