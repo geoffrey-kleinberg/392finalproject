@@ -3,7 +3,7 @@
  * 
  * Code mostly from https://gist.github.com/mre/1392067 with some modifications.
  * 
- * Compile with: nvcc -arch=sm_86 -O3 utilities.c bitonic-mergesort_gpu.cu -o bitonic-mergesort_gpu
+ * Compile with: nvcc -arch=sm_86 -O3 bitonic-mergesort_gpu.cu -o bitonic-mergesort_gpu
  * Run with: ./bitonic-mergesort_gpu array-length
  * 
  * Do we include memory copy in the time taken?
@@ -41,18 +41,14 @@ __global__ void bitonic_sort_step(double *d_values, int j, int k) {
             /* Sort ascending */
             if (d_values[i]>d_values[ixj]) {
                 /* exchange(i,ixj); */
-                double temp = d_values[i];
-                d_values[i] = d_values[ixj];
-                d_values[ixj] = temp;
+                swap(d_values, i, ixj);
             }
         }
         if ((i&k)!=0) {
             /* Sort descending */
             if (d_values[i]<d_values[ixj]) {
                 /* exchange(i,ixj); */
-                double temp = d_values[i];
-                d_values[i] = d_values[ixj];
-                d_values[ixj] = temp;
+                swap(d_values, i, ixj);
             }
         }
     }

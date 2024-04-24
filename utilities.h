@@ -40,3 +40,19 @@ static int lowest_power_of_two(int n) {
 static int greatest_power_of_two(int n) {
     return lowest_power_of_two(n) / 2;
 }
+
+
+
+#ifdef __CUDACC__
+__device__ void swap(double* arr, int i, int j) {
+    double temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+}
+#else
+static void swap(double* arr, int i, int j) {
+    double temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+}
+#endif

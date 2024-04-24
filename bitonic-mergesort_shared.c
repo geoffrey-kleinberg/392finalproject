@@ -5,7 +5,7 @@
  * and ideas from https://hwlang.de/algorithmen/sortieren/bitonic/oddn.htm,
  * with some modifications to make it work with OpenMP.
  * 
- * Compile (local) with: gcc-13 -Wall -O3 -fopenmp bitonic-mergesort_shared.c utilities.c -o bitonic-mergesort_shared
+ * Compile (local) with: gcc-13 -Wall -O3 -fopenmp bitonic-mergesort_shared.c -o bitonic-mergesort_shared
  * Run with: ./bitonic-mergesort_shared length (num-threads)
 */
 
@@ -27,9 +27,7 @@ void bitonic_merge(double *arr, int start, int length, bool ascending, int num_t
     int m = greatest_power_of_two(length);
     for (int i = start; i < start + length - m; i++) {
         if (((arr[i] > arr[i + m]) == ascending)) {
-            double temp = arr[i];
-            arr[i] = arr[i + m];
-            arr[i + m] = temp;
+            swap(arr, i, i + m);
         }
     }
     

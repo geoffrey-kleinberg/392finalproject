@@ -3,7 +3,7 @@ Sorts a list of numbers using the odd-even sort algorithm.
 incorperates OpenMP to parallelize the sorting process.
 
 Compile using:
-    gcc-13 -Wall -O3 -fopenmp utilities.c odd-even-sort_shared.c -o odd-even-sort_shared
+    gcc-13 -Wall -O3 -fopenmp odd-even-sort_shared.c -o odd-even-sort_shared
 
 Run using:
     ./odd-even-sort_shared array-length (num-threads)
@@ -23,11 +23,6 @@ Run using:
 
 #include "utilities.h"
 
-void swap(double* arr, int i, int j) {
-    double temp = arr[i];
-    arr[i] = arr[j];
-    arr[j] = temp;
-}
 
 void odd_even_sort(double* arr, int n, int num_threads) {
 
