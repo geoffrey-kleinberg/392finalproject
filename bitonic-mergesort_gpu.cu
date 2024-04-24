@@ -6,7 +6,8 @@
  * Compile with: nvcc -arch=sm_86 -O3 utilities.c bitonic-mergesort_gpu.cu -o bitonic-mergesort_gpu
  * Run with: ./bitonic-mergesort_gpu array-length
  * 
- * Current constraints: 256 < array-length <= 2^19
+ * Do we include memory copy in the time taken?
+ * Can we use C headers in CUDA?
 */
 
 #include <stdio.h>
@@ -97,24 +98,33 @@ void bitonic_sort(double *values, int n) {
     cudaMalloc((void**) &dev_values, size);
     cudaMemcpy(dev_values, values, size, cudaMemcpyHostToDevice);
 
-    // int block = min(BLOCK_SIZE, lowest_power_of_two(n) / 2);
+    int block = (BLOCK_SIZE < n) ? BLOCK_SIZE : n;
 
-    dim3 blocks(BLOCK_SIZE, 1);
-    dim3 threads(n / BLOCK_SIZE, 1);
+    dim3 blocks(block, 1);
+    dim3 threads(n / block, 1);
 
     int j, k;
     /* Major step */
     for (k = 2; k <= n; k <<= 1) {
         /* Minor step */
         for (j=k>>1; j>0; j=j>>1) {
-            bitonic_sort_step<<<blocks, threads>>>(dev_values, j, k);
+            bitonic_sort_step<<<threads, blocks>>>(dev_values, j, k);
         }
     }
 
     cudaMemcpy(values, dev_values, size, cudaMemcpyDeviceToHost);
     cudaFree(dev_values);
+}
 
-    cudaDeviceReset();
+void bitonic_sort_mem_only(double *values, int n) {
+    double *dev_values;
+    size_t size = n * sizeof(double);
+
+    cudaMalloc((void**) &dev_values, size);
+    cudaMemcpy(dev_values, values, size, cudaMemcpyHostToDevice);
+
+    cudaMemcpy(values, dev_values, size, cudaMemcpyDeviceToHost);
+    cudaFree(dev_values);
 }
 
 int main(int argc, char *argv[]) {
@@ -132,11 +142,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // print the array
-    // for (int i = 0; i < n; i++) {
-    //     printf("%f ", arr[i]);
-    // }
-    // printf("\n");
+    // warm up the GPU
+    int new_n = lowest_power_of_two(n);
+    double* arr_copy = (double *)malloc(new_n * sizeof(double));
+    memcpy(arr_copy, arr, n * sizeof(double));
+    extend_array(arr_copy, n, new_n);
+    bitonic_sort(arr_copy, new_n);
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -149,11 +160,6 @@ int main(int argc, char *argv[]) {
 
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    // for (int i = 0; i < n; i++) {
-    //     printf("%f ", arr[i]);
-    // }
-    // printf("\n");
-
     if (!is_sorted(arr, n)) {
         printf("Error: Array is not sorted\n");
         return 1;
@@ -161,8 +167,19 @@ int main(int argc, char *argv[]) {
 
     double time_taken = end.tv_sec-start.tv_sec+(end.tv_nsec-start.tv_nsec)/1000000000.0;
 
-    printf("Time taken: %f\n", time_taken);
+    // get the time for memory only
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    bitonic_sort_mem_only(arr, m);
+    clock_gettime(CLOCK_MONOTONIC, &end);
 
+    double time_taken_mem = end.tv_sec-start.tv_sec+(end.tv_nsec-start.tv_nsec)/1000000000.0;
+
+    printf("Time taken: %f\n", time_taken);
+    printf("Time taken for memory only: %f\n", time_taken_mem);
+    printf("Time for sorting: %f\n", time_taken - time_taken_mem);
+
+
+    cudaDeviceReset();
     free(arr);
 
     return 0;
