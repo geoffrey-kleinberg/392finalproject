@@ -87,21 +87,11 @@ int main(int argc, char *argv[]) {
     double* arr2 = create_array(n);
     merge_sort(arr2, n);
 
-    for (int i = 0; i < n; i++) {
-        printf("%f ", arr[i]);  
-    }
-    printf("\n");
-
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     merge_sort(arr, n);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
-
-    for (int i = 0; i < n; i++) {
-        printf("%f ", arr[i]);  
-    }
-    printf("\n");
 
     if (!is_sorted(arr, n)) {
         printf("Error: Array is not sorted\n");
