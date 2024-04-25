@@ -4,7 +4,6 @@
  * Compile with: nvcc -arch=sm_86 -O3 odd-even-sort_gpu.cu -o odd-even-sort_gpu
  * Run with: ./odd-even-sort_gpu array-length
  * 
- * Current constraints: array-length <= 2^19
  */
 
 #include <stdio.h>
@@ -21,80 +20,65 @@
 #define BLOCK_SIZE 512
 
 __global__ void odd_even_sort_kernel(double* arr, int n) {
-    __shared__ int is_sorted;
     int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int max = (blockIdx.x + 1) * blockDim.x;
 
-    is_sorted = 0;
-    while (!is_sorted) {
-    // for (int j = 0; j < n; j++) {
-        is_sorted = 1;
+    for (int j = 0; j < blockDim.x; j++) {
         //even phase
-        if (i % 2 == 0 && i < n - 1) {
+        if (i % 2 == 0 && i < max - 1 && i < n - 1) {
             if (arr[i] > arr[i + 1]) {
                 swap(arr, i, i + 1);
-                is_sorted = 0;
             }
         }
         __syncthreads();
         //odd phase
-        if (i % 2 == 1 && i < n - 1) {
+        if (i % 2 == 1 && i < max - 1 && i < n - 1) {
             if (arr[i] > arr[i + 1]) {
                 swap(arr, i, i + 1);
-                is_sorted = 0;
             }
         }
         __syncthreads();
     }
 }
 
-__global__ void merge_kernel(double* arr, int n, int merge_length) {
-    int i = threadIdx.x + blockIdx.x * blockDim.x;
-    
-    int start = i * merge_length;
-    int mid = start + merge_length / 2;
-    int end = start + merge_length;
+__global__ void merge_kernel(double* arr, int n, int merge_length, double* temp) {
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
-    if (mid >= n) {
+    size_t left = tid * merge_length;
+    size_t middle = left + merge_length / 2;
+    size_t right = (left + merge_length < n) ? left + merge_length : n;
+
+    if (left >= n) {
         return;
     }
 
-    if (end > n) {
-        end = n;
+    if (middle >= n) {
+        return;
     }
 
-    double* temp = (double*)malloc(merge_length * sizeof(double));
-    int left = start;
-    int right = mid;
-    int k = 0;
+    size_t i = left;
+    size_t j = middle;
+    size_t k = left;
 
-    while (left < mid && right < end) {
-        if (arr[left] < arr[right]) {
-            temp[k] = arr[left];
-            left++;
+    while (i < middle && j < right) 
+    {
+        if (arr[i] <= arr[j]) {
+            temp[k++] = arr[i++];
         } else {
-            temp[k] = arr[right];
-            right++;
+            temp[k++] = arr[j++];
         }
-        k++;
     }
 
-    while (left < mid) {
-        temp[k] = arr[left];
-        left++;
-        k++;
+    while (i < middle) {
+        temp[k++] = arr[i++];
+    }
+    while (j < right) {
+        temp[k++] = arr[j++];
     }
 
-    while (right < end) {
-        temp[k] = arr[right];
-        right++;
-        k++;
+    for (int x = left; x < right; x++) {
+        arr[x] = temp[x];
     }
-
-    for (int j = 0; j < k; j++) {
-        arr[start + j] = temp[j];
-    }
-
-    free(temp);
 
 }
 
@@ -107,40 +91,17 @@ void odd_even_sort(double* arr, int n) {
 
     odd_even_sort_kernel<<<num_blocks, BLOCK_SIZE>>>(d_arr, n);
 
-    // int merge_length = BLOCK_SIZE;
+    double* d_temp;
+    cudaMalloc(&d_temp, n * sizeof(double));
 
-    // while (merge_length < n) {
-    //     merge_length *= 2;
-    //     merge_kernel<<<num_blocks, BLOCK_SIZE>>>(d_arr, n, merge_length);
-    // }
-
-    // merge blocks on the cpu
-    // double* temp = (double*)malloc(n * sizeof(double));
-    // int* offsets = (int*)malloc(num_blocks * sizeof(int));
-    // for (int i = 0; i < num_blocks; i++) {
-    //     offsets[i] = i * BLOCK_SIZE;
-    // }
-
-    // for (int i = 0; i < n; i++) {
-    //     double min = INFINITY;
-    //     int min_block = -1;
-    //     for (int j = 0; j < num_blocks; j++) {
-    //         if (offsets[j] < (j + 1) * BLOCK_SIZE && d_arr[offsets[j]] < min) {
-    //             min = d_arr[offsets[j]];
-    //             min_block = j;
-    //         }
-    //     }
-
-    //     temp[i] = min;
-    //     offsets[min_block]++;
-    // }
-
-    // memcpy(arr, temp, n * sizeof(double));
-
-    // free(temp);
+    for (int merge_length = 2 * BLOCK_SIZE; merge_length < 2 * n; merge_length *= 2) {
+        merge_kernel<<<num_blocks, BLOCK_SIZE>>>(d_arr, n, merge_length, d_temp);
+    }
 
     cudaMemcpy(arr, d_arr, n * sizeof(double), cudaMemcpyDeviceToHost);
     cudaFree(d_arr);
+    cudaFree(d_temp);
+
 }
 
 void odd_even_sort_mem_only(double* arr, int n) {
@@ -148,8 +109,12 @@ void odd_even_sort_mem_only(double* arr, int n) {
     cudaMalloc(&d_arr, n * sizeof(double));
     cudaMemcpy(d_arr, arr, n * sizeof(double), cudaMemcpyHostToDevice);
 
+    double* d_temp;
+    cudaMalloc(&d_temp, n * sizeof(double));
+
     cudaMemcpy(arr, d_arr, n * sizeof(double), cudaMemcpyDeviceToHost);
     cudaFree(d_arr);
+    cudaFree(d_temp);
 }
 
 int main(int argc, char *argv[]) {
@@ -171,24 +136,12 @@ int main(int argc, char *argv[]) {
     double* arr2 = create_array(n);
     odd_even_sort(arr2, n);
 
-    // print before
-    for (int i = 0; i < n; i++) {
-        printf("%f ", arr[i]);
-    }
-    printf("\n");
-
     // get the time for the full algorithm
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     odd_even_sort(arr, n);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
-
-    for (int i = 0; i < n; i++) {
-        printf("%f ", arr[i]);
-    }
-    printf("\n");
-
 
     if (!is_sorted(arr, n)) {
         printf("Error: Array is not sorted\n");
