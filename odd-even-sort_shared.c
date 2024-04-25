@@ -1,16 +1,14 @@
 /*
-Sorts a list of numbers using the odd-even sort algorithm.
-incorperates OpenMP to parallelize the sorting process.
-
-Compile using:
-    gcc-13 -Wall -O3 -fopenmp odd-even-sort_shared.c -o odd-even-sort_shared
-
-Run using:
-    ./odd-even-sort_shared array-length (num-threads)
-    where:
-        array-length: the length of the array to be sorted
-        num-threads: the number of threads to use (optional, default is half the number of cores)
-
+ * Sorts a list of numbers using the odd-even sort algorithm.
+ * incorperates OpenMP to parallelize the sorting process.
+ * 
+ * Compile (local) using: gcc-13 -Wall -O3 -fopenmp odd-even-sort_shared.c -o odd-even-sort_shared
+ * Compile (mucluster) using: gcc -Wall -O3 -fopenmp odd-even-sort_shared.c -o odd-even-sort_shared
+ * Run with: ./odd-even-sort_shared array-length (num-threads)
+ * where:
+ *       array-length: the length of the array to be sorted
+ *       num-threads: the number of threads to use (optional, default is half the number of cores)
+ *
 */
 
 #include <stdbool.h>

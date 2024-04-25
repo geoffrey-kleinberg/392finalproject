@@ -6,6 +6,7 @@
  * with some modifications to make it work with OpenMP.
  * 
  * Compile (local) with: gcc-13 -Wall -O3 -fopenmp bitonic-mergesort_shared.c -o bitonic-mergesort_shared
+ * Compile (cluster) with: gcc -Wall -O3 -fopenmp bitonic-mergesort_shared.c -o bitonic-mergesort_shared
  * Run with: ./bitonic-mergesort_shared length (num-threads)
 */
 

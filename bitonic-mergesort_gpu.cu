@@ -18,8 +18,6 @@
 
 #include <cuda_runtime.h>
 
-#define BLOCK_SIZE 512
-
 void extend_array(double *arr, int n, int m) {
 
     for (int i = n; i < m; i++) {
@@ -51,14 +49,14 @@ __global__ void bitonic_sort_step(double *d_values, int j, int k) {
     }
 }
 
-void bitonic_sort(double *values, int n) {
+void bitonic_sort(double *values, int n, int block_size) {
     double *d_values;
     size_t size = n * sizeof(double);
 
     CHECK(cudaMalloc((void**) &d_values, size));
     CHECK(cudaMemcpy(d_values, values, size, cudaMemcpyHostToDevice));
 
-    int block = (BLOCK_SIZE < n) ? BLOCK_SIZE : n;
+    int block = (block_size < n) ? block_size : n;
 
     dim3 blocks(block, 1);
     dim3 threads(n / block, 1);
@@ -76,7 +74,7 @@ void bitonic_sort(double *values, int n) {
     CHECK(cudaFree(d_values));
 }
 
-void bitonic_sort_mem_only(double *values, int n) {
+void bitonic_sort_mem_only(double *values, int n, int block_size) {
     double *d_values;
     size_t size = n * sizeof(double);
 
@@ -88,8 +86,9 @@ void bitonic_sort_mem_only(double *values, int n) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        printf("Usage: %s array-length\n", argv[0]);
+    int block_size = 512;
+    if (argc != 2 && argc != 3) {
+        printf("Usage: %s array-length (num-threads)\n", argv[0]);
         return 1;
     }
 
@@ -101,11 +100,14 @@ int main(int argc, char *argv[]) {
         printf("Error: Unable to allocate memory\n");
         return 1;
     }
+    if (argc == 3) {
+        block_size = atoi(argv[2]);
+    }
 
     // warm up the GPU
     int new_n = lowest_power_of_two(n);
     double* arr2 = create_array(new_n);
-    bitonic_sort(arr2, new_n);
+    bitonic_sort(arr2, new_n, block_size);
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -114,7 +116,7 @@ int main(int argc, char *argv[]) {
     arr = (double *)realloc(arr, m * sizeof(double));
     extend_array(arr, n, m);
 
-    bitonic_sort(arr, m);
+    bitonic_sort(arr, m, block_size);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -127,7 +129,7 @@ int main(int argc, char *argv[]) {
 
     // get the time for memory only
     clock_gettime(CLOCK_MONOTONIC, &start);
-    bitonic_sort_mem_only(arr, m);
+    bitonic_sort_mem_only(arr, m, block_size);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     double time_taken_mem = end.tv_sec-start.tv_sec+(end.tv_nsec-start.tv_nsec)/1000000000.0;

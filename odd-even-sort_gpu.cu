@@ -19,8 +19,6 @@
 
 #include <cuda_runtime.h>
 
-#define BLOCK_SIZE 512
-
 __global__ void odd_even_sort_kernel(double* arr, int n) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int max = (blockIdx.x + 1) * blockDim.x;
@@ -84,20 +82,20 @@ __global__ void merge_kernel(double* arr, int n, int merge_length, double* temp)
 
 }
 
-void odd_even_sort(double* arr, int n) {
+void odd_even_sort(double* arr, int n, int block_size) {
     double *d_arr;
     CHECK(cudaMalloc(&d_arr, n * sizeof(double)));
     CHECK(cudaMemcpy(d_arr, arr, n * sizeof(double), cudaMemcpyHostToDevice));
 
-    int num_blocks = (n + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    int num_blocks = (n + block_size - 1) / block_size;
 
-    odd_even_sort_kernel<<<num_blocks, BLOCK_SIZE>>>(d_arr, n);
+    odd_even_sort_kernel<<<num_blocks, block_size>>>(d_arr, n);
 
     double* d_temp;
     CHECK(cudaMalloc(&d_temp, n * sizeof(double)));
 
-    for (int merge_length = 2 * BLOCK_SIZE; merge_length < 2 * n; merge_length *= 2) {
-        merge_kernel<<<num_blocks, BLOCK_SIZE>>>(d_arr, n, merge_length, d_temp);
+    for (int merge_length = 2 * block_size; merge_length < 2 * n; merge_length *= 2) {
+        merge_kernel<<<num_blocks, block_size>>>(d_arr, n, merge_length, d_temp);
     }
 
     CHECK(cudaMemcpy(arr, d_arr, n * sizeof(double), cudaMemcpyDeviceToHost));
@@ -106,7 +104,7 @@ void odd_even_sort(double* arr, int n) {
 
 }
 
-void odd_even_sort_mem_only(double* arr, int n) {
+void odd_even_sort_mem_only(double* arr, int n, int block_size) {
     double *d_arr;
     CHECK(cudaMalloc(&d_arr, n * sizeof(double)));
     CHECK(cudaMemcpy(d_arr, arr, n * sizeof(double), cudaMemcpyHostToDevice));
@@ -120,8 +118,9 @@ void odd_even_sort_mem_only(double* arr, int n) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        printf("Usage: %s array-length\n", argv[0]);
+    int block_size = 512;
+    if (argc != 2 && argc != 3) {
+        printf("Usage: %s array-length (num-threads)\n", argv[0]);
         return 1;
     }
 
@@ -133,15 +132,18 @@ int main(int argc, char *argv[]) {
         printf("Error: Unable to allocate memory\n");
         return 1;
     }
+    if (argc == 3) {
+        block_size = atoi(argv[2]);
+    }
 
     // warm up the GPU
     double* arr2 = create_array(n);
-    odd_even_sort(arr2, n);
+    odd_even_sort(arr2, n, block_size);
 
     // get the time for the full algorithm
     clock_gettime(CLOCK_MONOTONIC, &start);
 
-    odd_even_sort(arr, n);
+    odd_even_sort(arr, n, block_size);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -154,7 +156,7 @@ int main(int argc, char *argv[]) {
 
     // get the time for memory only
     clock_gettime(CLOCK_MONOTONIC, &start);
-    odd_even_sort_mem_only(arr, n);
+    odd_even_sort_mem_only(arr, n, block_size);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     double time_taken_mem = end.tv_sec-start.tv_sec+(end.tv_nsec-start.tv_nsec)/1000000000.0;
