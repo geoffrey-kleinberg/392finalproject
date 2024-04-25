@@ -5,9 +5,6 @@
  * 
  * Compile with: nvcc -arch=sm_86 -O3 bitonic-mergesort_gpu.cu -o bitonic-mergesort_gpu
  * Run with: ./bitonic-mergesort_gpu array-length
- * 
- * Do we include memory copy in the time taken?
- * Can we use C headers in CUDA?
 */
 
 #include <stdio.h>
@@ -58,8 +55,8 @@ void bitonic_sort(double *values, int n) {
     double *d_values;
     size_t size = n * sizeof(double);
 
-    cudaMalloc((void**) &d_values, size);
-    cudaMemcpy(d_values, values, size, cudaMemcpyHostToDevice);
+    CHECK(cudaMalloc((void**) &d_values, size));
+    CHECK(cudaMemcpy(d_values, values, size, cudaMemcpyHostToDevice));
 
     int block = (BLOCK_SIZE < n) ? BLOCK_SIZE : n;
 
@@ -75,19 +72,19 @@ void bitonic_sort(double *values, int n) {
         }
     }
 
-    cudaMemcpy(values, d_values, size, cudaMemcpyDeviceToHost);
-    cudaFree(d_values);
+    CHECK(cudaMemcpy(values, d_values, size, cudaMemcpyDeviceToHost));
+    CHECK(cudaFree(d_values));
 }
 
 void bitonic_sort_mem_only(double *values, int n) {
     double *d_values;
     size_t size = n * sizeof(double);
 
-    cudaMalloc((void**) &d_values, size);
-    cudaMemcpy(d_values, values, size, cudaMemcpyHostToDevice);
+    CHECK(cudaMalloc((void**) &d_values, size));
+    CHECK(cudaMemcpy(d_values, values, size, cudaMemcpyHostToDevice));
 
-    cudaMemcpy(values, d_values, size, cudaMemcpyDeviceToHost);
-    cudaFree(d_values);
+    CHECK(cudaMemcpy(values, d_values, size, cudaMemcpyDeviceToHost));
+    CHECK(cudaFree(d_values));
 }
 
 int main(int argc, char *argv[]) {
@@ -140,7 +137,7 @@ int main(int argc, char *argv[]) {
     printf("Time for sorting: %f\n", time_taken - time_taken_mem);
 
 
-    cudaDeviceReset();
+    CHECK(cudaDeviceReset());
     free(arr);
 
     return 0;

@@ -1,5 +1,7 @@
 /**
  * Implement the odd-even sort algorithm on the GPU.
+ * Code from https://www.cs.emory.edu/~cheung/Courses/355/Syllabus/94-CUDA/SLIDES/s19.html and 
+ * https://github.com/rbga/CUDA-Merge-and-Bitonic-Sort/blob/master/BitonicMerge/kernel.cu with some modifications.
  * 
  * Compile with: nvcc -arch=sm_86 -O3 odd-even-sort_gpu.cu -o odd-even-sort_gpu
  * Run with: ./odd-even-sort_gpu array-length
@@ -84,37 +86,37 @@ __global__ void merge_kernel(double* arr, int n, int merge_length, double* temp)
 
 void odd_even_sort(double* arr, int n) {
     double *d_arr;
-    cudaMalloc(&d_arr, n * sizeof(double));
-    cudaMemcpy(d_arr, arr, n * sizeof(double), cudaMemcpyHostToDevice);
+    CHECK(cudaMalloc(&d_arr, n * sizeof(double)));
+    CHECK(cudaMemcpy(d_arr, arr, n * sizeof(double), cudaMemcpyHostToDevice));
 
     int num_blocks = (n + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     odd_even_sort_kernel<<<num_blocks, BLOCK_SIZE>>>(d_arr, n);
 
     double* d_temp;
-    cudaMalloc(&d_temp, n * sizeof(double));
+    CHECK(cudaMalloc(&d_temp, n * sizeof(double)));
 
     for (int merge_length = 2 * BLOCK_SIZE; merge_length < 2 * n; merge_length *= 2) {
         merge_kernel<<<num_blocks, BLOCK_SIZE>>>(d_arr, n, merge_length, d_temp);
     }
 
-    cudaMemcpy(arr, d_arr, n * sizeof(double), cudaMemcpyDeviceToHost);
-    cudaFree(d_arr);
-    cudaFree(d_temp);
+    CHECK(cudaMemcpy(arr, d_arr, n * sizeof(double), cudaMemcpyDeviceToHost));
+    CHECK(cudaFree(d_arr));
+    CHECK(cudaFree(d_temp));
 
 }
 
 void odd_even_sort_mem_only(double* arr, int n) {
     double *d_arr;
-    cudaMalloc(&d_arr, n * sizeof(double));
-    cudaMemcpy(d_arr, arr, n * sizeof(double), cudaMemcpyHostToDevice);
+    CHECK(cudaMalloc(&d_arr, n * sizeof(double)));
+    CHECK(cudaMemcpy(d_arr, arr, n * sizeof(double), cudaMemcpyHostToDevice));
 
     double* d_temp;
-    cudaMalloc(&d_temp, n * sizeof(double));
+    CHECK(cudaMalloc(&d_temp, n * sizeof(double)));
 
-    cudaMemcpy(arr, d_arr, n * sizeof(double), cudaMemcpyDeviceToHost);
-    cudaFree(d_arr);
-    cudaFree(d_temp);
+    CHECK(cudaMemcpy(arr, d_arr, n * sizeof(double), cudaMemcpyDeviceToHost));
+    CHECK(cudaFree(d_arr));
+    CHECK(cudaFree(d_temp));
 }
 
 int main(int argc, char *argv[]) {
@@ -162,7 +164,7 @@ int main(int argc, char *argv[]) {
     printf("Time for sorting: %f\n", time_taken - time_taken_mem);
 
 
-    cudaDeviceReset();
+    CHECK(cudaDeviceReset());
     free(arr);
 
     return 0;
