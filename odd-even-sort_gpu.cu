@@ -41,7 +41,7 @@ __global__ void odd_even_sort_kernel(double* arr, int n) {
     }
 }
 
-__global__ void merge_kernel(double* arr, int n, int merge_length, double* temp) {
+__global__ void merge_kernel(double* arr, size_t n, size_t merge_length, double* temp) {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
     size_t left = tid * merge_length;
