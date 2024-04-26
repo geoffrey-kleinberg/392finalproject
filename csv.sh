@@ -6,7 +6,7 @@ if [ $# -ne 2 -o $# -ne 3 ]; then
     exit 1
 fi
 
-outfile=$3
+outfile="${@: -1}"
 
 if [ ! -p /dev/stdin ]; then
     echo "Please pipe in the output from one of the programs"
