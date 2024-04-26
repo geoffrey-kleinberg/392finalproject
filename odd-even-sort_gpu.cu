@@ -162,8 +162,8 @@ int main(int argc, char *argv[]) {
     double time_taken_mem = end.tv_sec-start.tv_sec+(end.tv_nsec-start.tv_nsec)/1000000000.0;
 
     printf("Time taken: %f\n", time_taken);
-    printf("Time taken for memory only: %f\n", time_taken_mem);
-    printf("Time for sorting: %f\n", time_taken - time_taken_mem);
+    // printf("Time taken for memory only: %f\n", time_taken_mem);
+    // printf("Time for sorting: %f\n", time_taken - time_taken_mem);
 
 
     CHECK(cudaDeviceReset());
