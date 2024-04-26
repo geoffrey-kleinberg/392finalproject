@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if output argument is provided
-if [ $# -ne 2 -o $# -ne 3 ]; then
+if [ $# -lt 2 ]; then
     echo "Usage: $0 <array_size> [threads] <outfile>"
     exit 1
 fi
