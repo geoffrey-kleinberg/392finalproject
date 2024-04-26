@@ -45,7 +45,7 @@ bool shell_sort(double *arr, int n) {
     gaps[6] = 301;
     gaps[7] = 701;
     int next = 701 * 9 / 4;
-    for (int i = 8; i < count_gaps + 8; i++) {
+    for (int i = 8; i < count_gaps; i++) {
         gaps[i] = next;
         next = next * 9 / 4;
     }
