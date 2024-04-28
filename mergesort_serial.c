@@ -5,6 +5,8 @@
  * 
  * Compile with: gcc -Wall -O3 mergesort_serial.c -o mergesort_serial
  * Run with: ./mergesort_serial array-length
+ * where:
+ *       array-length: the length of the array to be sorted
 */
 
 #include <stdio.h>

@@ -1,11 +1,14 @@
 /**
  * Implement the odd-even sort algorithm on the GPU.
+ * 
  * Code from https://www.cs.emory.edu/~cheung/Courses/355/Syllabus/94-CUDA/SLIDES/s19.html and 
  * https://github.com/rbga/CUDA-Merge-and-Bitonic-Sort/blob/master/BitonicMerge/kernel.cu with some modifications.
  * 
  * Compile with: nvcc -arch=sm_86 -O3 odd-even-sort_gpu.cu -o odd-even-sort_gpu
  * Run with: ./odd-even-sort_gpu array-length
- * 
+ * where:
+ *       array-length: the length of the array to be sorted
+ *       num-threads: the number of threads per block to use (optional, default is 512)
  */
 
 #include <stdio.h>

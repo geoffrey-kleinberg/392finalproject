@@ -4,7 +4,10 @@
  * Code mostly from https://gist.github.com/mre/1392067 with some modifications.
  * 
  * Compile with: nvcc -arch=sm_86 -O3 bitonic-mergesort_gpu.cu -o bitonic-mergesort_gpu
- * Run with: ./bitonic-mergesort_gpu array-length
+ * Run with: ./bitonic-mergesort_gpu array-length (num-threads)
+ * where:
+ *       array-length: the length of the array to be sorted
+ *       num-threads: the number of threads per block to use (optional, default is 512)
 */
 
 #include <stdio.h>

@@ -8,6 +8,9 @@
  * Compile (local) with: gcc-13 -Wall -O3 -fopenmp bitonic-mergesort_shared.c -o bitonic-mergesort_shared
  * Compile (cluster) with: gcc -Wall -O3 -fopenmp bitonic-mergesort_shared.c -o bitonic-mergesort_shared
  * Run with: ./bitonic-mergesort_shared length (num-threads)
+ * where:
+ *       array-length: the length of the array to be sorted
+ *       num-threads: the number of threads to use (optional, default is half the number of cores)
 */
 
 #include <stdio.h>

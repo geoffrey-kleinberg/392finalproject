@@ -2,6 +2,9 @@
  * Sorts a list of numbers using the odd-even sort algorithm.
  * incorperates OpenMP to parallelize the sorting process.
  * 
+ * Code from https://github.com/eduardnegru/Parallel-Odd-Even-Transposition-Sort/blob/master/openmp.c
+ * with some modifications.
+ * 
  * Compile (local) using: gcc-13 -Wall -O3 -fopenmp odd-even-sort_shared.c -o odd-even-sort_shared
  * Compile (mucluster) using: gcc -Wall -O3 -fopenmp odd-even-sort_shared.c -o odd-even-sort_shared
  * Run with: ./odd-even-sort_shared array-length (num-threads)
