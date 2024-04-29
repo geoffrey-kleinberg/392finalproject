@@ -53,7 +53,7 @@ bool shell_sort(double *arr, int n) {
         next = next * 9 / 4;
     }
 
-
+    // use the shell sort algorithm with the gaps above
     for (int g = count_gaps - 1; g >= 0; g--) {
         int gap = gaps[g];
         for (int i = gap; i < n; i++) {

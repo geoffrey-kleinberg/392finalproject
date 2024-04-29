@@ -22,7 +22,8 @@ bool merge(double *left, int left_len, double *right, int right_len) {
     double* temp = (double*)malloc((left_len + right_len) * sizeof(double));
 
     int i = 0, j = 0, k = 0;
-
+    
+    // merge the two arrays
     while (i < left_len && j < right_len) {
         if (left[i] < right[j]) {
             temp[k] = left[i];
@@ -62,9 +63,11 @@ bool merge_sort(double *arr, int n) {
     double *left = arr;
     double *right = arr + mid;
 
+    // sort the two halves
     merge_sort(left, mid);
     merge_sort(right, n - mid);
 
+    // merge the two halves
     merge(left, mid, right, n - mid);
 
     return true;

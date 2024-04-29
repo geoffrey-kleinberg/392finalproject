@@ -49,6 +49,7 @@ bool bitonic_merge_sort_openMP(double *arr, int start, int n, int num_threads, b
         power = n;
     }
 
+    // sorts the first power of two elements in ascending order
     for (int j = 2; j <= power; j = j*2) {
         #pragma omp parallel for num_threads(num_threads) default(none) shared(arr, start, n, j, ascending, power)
         for (int i = start; i < start + power; i += j) {
@@ -60,7 +61,10 @@ bool bitonic_merge_sort_openMP(double *arr, int start, int n, int num_threads, b
         }
     }
 
+    // recursively sort the remaining elements
     bitonic_merge_sort_openMP(arr, start + power, n - power, num_threads, ascending);
+
+    // merge the sorted subsequences
     bitonic_merge(arr, start, n, ascending, num_threads);
 
     return true;

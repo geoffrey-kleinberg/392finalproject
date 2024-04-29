@@ -92,11 +92,14 @@ void odd_even_sort(double* arr, int n, int block_size) {
 
     int num_blocks = (n + block_size - 1) / block_size;
 
+
+    // perform initial odd-even sort
     odd_even_sort_kernel<<<num_blocks, block_size>>>(d_arr, n);
 
     double* d_temp;
     CHECK(cudaMalloc(&d_temp, n * sizeof(double)));
 
+    // merge the sorted blocks
     for (int merge_length = 2 * block_size; merge_length < 2 * n; merge_length *= 2) {
         merge_kernel<<<num_blocks, block_size>>>(d_arr, n, merge_length, d_temp);
     }
