@@ -70,6 +70,8 @@ bool shell_sort(double *arr, int n) {
         
     }
 
+    free(gaps);
+
     return true;
 }
 
