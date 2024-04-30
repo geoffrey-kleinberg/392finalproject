@@ -49,6 +49,8 @@ bool merge(double *left, int left_len, double *right, int right_len) {
 
 
     memcpy(left, temp, (left_len + right_len) * sizeof(double));
+
+    free(temp);
     
     return true;
 }
